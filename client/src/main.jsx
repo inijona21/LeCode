@@ -18,7 +18,7 @@ import { io } from "socket.io-client";
 const backendUrl = "https://le-code-server.vercel.app";
 
 const socket = io(backendUrl, {
-    transports: ["polling"],
+    transports: ["websocket"],
     withCredentials: true
 });
 
