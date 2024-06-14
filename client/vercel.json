@@ -1,5 +1,5 @@
 {
     "env": {
-        "VITE_BACKEND_URL": "5000"
+        "VITE_BACKEND_URL": "3000"
     }
 }
