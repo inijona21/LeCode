@@ -14,7 +14,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 
 import { io } from "socket.io-client";
 
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+// Ganti dengan URL server Anda
+const backendUrl = "https://le-code-server.vercel.app";
 
 const socket = io(backendUrl, {
     transports: ["websocket", "polling"],
