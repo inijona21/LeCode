@@ -7,7 +7,6 @@ const ACTIONS = require("./utils/actions")
 
 const corsOptions = {
     origin: 'https://le-code.vercel.app', // Ganti dengan domain klien yang sesuai
-    optionsSuccessStatus: 200 // beberapa browser lama membutuhkan ini
 };
 
 app.use(express.json())
