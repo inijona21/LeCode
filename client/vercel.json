@@ -1,5 +1,5 @@
 {
-    ".env": {
+    "env": {
         "VITE_BACKEND_URL": "https://le-code-server-aditya-jonathans-projects.vercel.app"
     }
 }
