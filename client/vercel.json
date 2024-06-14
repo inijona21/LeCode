@@ -1,8 +1,5 @@
 {
     "rewrites": [
         {"source": "/(.*)", "destination": "/"}
-    ],
-    "env": {
-        "VITE_BACKEND_URL": "https://le-code-server.vercel.app"
-    }
+    ]
 }
