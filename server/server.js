@@ -5,6 +5,8 @@ const http = require("http")
 const cors = require("cors")
 const ACTIONS = require("./utils/actions")
 
+app.use(express.json())
+
 const corsOptions = {
     origin: 'https://le-code.vercel.app', // Ganti dengan URL klien Anda
     methods: ['GET', 'POST'],
