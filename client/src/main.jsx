@@ -12,10 +12,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     // </React.StrictMode>,
 )
 
+import { io } from "socket.io-client";
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-fetch(`${backendUrl}/api/some-endpoint`)
-  .then(response => response.json())
-  .then(data => console.log(data))
-  .catch(error => console.error('Error:', error))
+const socket = io(backendUrl, {
+    transports: ["websocket", "polling"],
+    withCredentials: true
+});
 
+socket.on("connect", () => {
+    console.log("Connected to server");
+});
+
+socket.on("connect_error", (error) => {
+    console.error("Connection error:", error);
+});
