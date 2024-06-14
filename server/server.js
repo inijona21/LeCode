@@ -14,7 +14,9 @@ const { Server } = require("socket.io")
 const server = http.createServer(app)
 const io = new Server(server, {
 	cors: {
-		origin: "https://le-code.vercel.app",
+		origin: "https://le-code.vercel.app", // Ganti dengan domain klien yang sesuai
+		methods: ["GET", "POST"], // Metode HTTP yang diizinkan
+		credentials: true // Mengizinkan cookies dan header Authorization
 	},
 })
 
