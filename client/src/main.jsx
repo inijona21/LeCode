@@ -12,7 +12,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     // </React.StrictMode>,
 )
 
-import {io} from "socket.io-client";
+import io from "socket.io-client";
 
 // Ganti dengan URL server Anda
 const backendUrl = "https://le-code-server.vercel.app";
