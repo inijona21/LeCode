@@ -6,21 +6,23 @@ const cors = require("cors")
 const ACTIONS = require("./utils/actions")
 
 const corsOptions = {
-    origin: ["https://le-code.vercel.app"], // Ganti dengan domain klien yang sesuai
+    origin: 'https://le-code.vercel.app', // Ganti dengan URL klien Anda
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+    credentials: true
 };
 
-app.use(express.json())
-
-app.use(cors(corsOptions))
+app.use(cors(corsOptions));
 
 const { Server } = require("socket.io")
 
 const server = http.createServer(app)
 const io = new Server(server, {
 	cors: {
-		origin: ["https://le-code.vercel.app"], // Ganti dengan domain klien yang sesuai
-		methods: ["GET", "POST"], // Metode HTTP yang diizinkan
-		credentials: true // Mengizinkan cookies dan header Authorization
+		origin: "https://le-code.vercel.app", // Ganti dengan URL klien Anda
+		methods: ["GET", "POST"],
+		allowedHeaders: ["Content-Type"],
+		credentials: true
 	},
 })
 
