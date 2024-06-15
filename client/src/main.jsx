@@ -11,21 +11,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </AppProvider>,
     // </React.StrictMode>,
 )
-
-import { io } from "socket.io-client";
-
-// Ganti dengan URL server Anda
-const backendUrl = "https://le-code-server.vercel.app";
-
-const socket = io(backendUrl, {
-    transports: ["websocket"],
-    withCredentials: true
-});
-
-socket.on("connect", () => {
-    console.log("Connected to server");
-});
-
-socket.on("connect_error", (error) => {
-    console.error("Connection error:", error);
-});
