@@ -7,24 +7,14 @@ const ACTIONS = require("./utils/actions")
 
 app.use(express.json())
 
-const corsOptions = {
-    origin: 'https://le-code.vercel.app', // Ganti dengan URL klien Anda
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true
-};
-
-app.use(cors(corsOptions));
+app.use(cors())
 
 const { Server } = require("socket.io")
 
 const server = http.createServer(app)
 const io = new Server(server, {
 	cors: {
-		origin: "https://le-code.vercel.app", // Ganti dengan URL klien Anda
-		methods: ["GET", "POST"],
-		allowedHeaders: ["Content-Type"],
-		credentials: true
+		origin: "*",
 	},
 })
 
@@ -156,7 +146,7 @@ io.on("connection", (socket) => {
 	})
 })
 
-const PORT = process.env.PORT || 5000
+const PORT = process.env.PORT || 3000
 
 app.get("/", (req, res) => {
 	res.send("Hello")
