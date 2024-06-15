@@ -7,15 +7,23 @@ const ACTIONS = require("./utils/actions")
 
 app.use(express.json())
 
-app.use(cors())
+app.use(cors({
+  origin: 'https://le-code.vercel.app', // Ganti dengan domain Vercel Anda
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+  credentials: true
+}))
 
 const { Server } = require("socket.io")
 
 const server = http.createServer(app)
 const io = new Server(server, {
 	cors: {
-		origin: "*",
-	},
+		origin: 'https://le-code.vercel.app', // Ganti dengan domain Vercel Anda
+		methods: ['GET', 'POST'],
+		allowedHeaders: ['Content-Type'],
+		credentials: true
+	}
 })
 
 let userSocketMap = []
