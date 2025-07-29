@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 5000
 // CORS configuration for production
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://your-client-domain.vercel.app" // Replace with your actual Vercel domain
+  "https://le-code.vercel.app" // Replace with your actual Vercel domain
 ]
 
 app.use(cors({
