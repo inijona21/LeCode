@@ -11,7 +11,7 @@ import { color } from "@uiw/codemirror-extensions-color"
 import { hyperLink } from "@uiw/codemirror-extensions-hyper-link"
 import { loadLanguage } from "@uiw/codemirror-extensions-langs"
 import CodeMirror from "@uiw/react-codemirror"
-import { useState } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import toast from "react-hot-toast"
 import { cursorTooltipBaseTheme, tooltipField } from "./tooltip"
 
@@ -22,23 +22,56 @@ function Editor() {
     const { socket } = useSocket()
     const { tabHeight } = useWindowDimensions()
     const [timeOut, setTimeOut] = useState(null)
+    const [isUpdatingFromServer, setIsUpdatingFromServer] = useState(false)
+    const editorRef = useRef(null)
     const filteredUsers = users.filter(
         (u) => u.username !== currentUser.username,
     )
 
-    const onCodeChange = (code, view) => {
+    const onCodeChange = useCallback((code, view) => {
+        // Don't emit if we're updating from server
+        if (isUpdatingFromServer) return
+
         const file = { ...currentFile, content: code }
         setCurrentFile(file)
-        socket.emit(ACTIONS.FILE_UPDATED, { file })
+        
+        // Debounce the server update
+        clearTimeout(timeOut)
+        const newTimeOut = setTimeout(() => {
+            socket.emit(ACTIONS.FILE_UPDATED, { file })
+        }, 300) // 300ms debounce
+        setTimeOut(newTimeOut)
+        
         const cursorPosition = view.state?.selection?.main?.head
         socket.emit(ACTIONS.TYPING_START, { cursorPosition })
+        
+        // Clear typing timeout
         clearTimeout(timeOut)
-        const newTimeOut = setTimeout(
+        const typingTimeOut = setTimeout(
             () => socket.emit(ACTIONS.TYPING_PAUSE),
             1000,
         )
-        setTimeOut(newTimeOut)
-    }
+        setTimeOut(typingTimeOut)
+    }, [currentFile, socket, timeOut, isUpdatingFromServer])
+
+    // Listen for file updates from server
+    const handleFileUpdateFromServer = useCallback(({ file }) => {
+        if (file.id === currentFile?.id) {
+            setIsUpdatingFromServer(true)
+            setCurrentFile(file)
+            // Reset flag after a short delay
+            setTimeout(() => setIsUpdatingFromServer(false), 50)
+        }
+    }, [currentFile?.id, setCurrentFile])
+
+    // Listen for FILE_UPDATED events from server
+    useEffect(() => {
+        socket.on(ACTIONS.FILE_UPDATED, handleFileUpdateFromServer)
+        
+        return () => {
+            socket.off(ACTIONS.FILE_UPDATED, handleFileUpdateFromServer)
+        }
+    }, [socket, handleFileUpdateFromServer])
 
     // Listen wheel event to zoom in/out and prevent page reload
     usePageEvents()
@@ -61,6 +94,7 @@ function Editor() {
 
     return (
         <CodeMirror
+            ref={editorRef}
             placeholder={placeholder(currentFile.name)}
             mode={language.toLowerCase()}
             theme={editorThemes[theme]}

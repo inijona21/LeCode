@@ -184,6 +184,7 @@ function FileContextProvider({ children }) {
 
     const handleFileUpdated = useCallback(
         ({ file }) => {
+            // Only update files list, don't update currentFile if user is typing
             setFiles((prev) =>
                 prev.map((f) => {
                     if (f.id === file.id) {
@@ -192,11 +193,10 @@ function FileContextProvider({ children }) {
                     return f
                 }),
             )
-            if (currentFile.id === file.id) {
-                setCurrentFile(file)
-            }
+            // Don't automatically update currentFile to avoid cursor jumping
+            // The Editor component will handle this separately
         },
-        [currentFile?.id],
+        [],
     )
 
     useEffect(() => {
