@@ -41,6 +41,7 @@ const SocketProvider = ({ children }) => {
 
     const handleJoiningAccept = useCallback(
         ({ user, users }) => {
+            console.log('[JOIN_ACCEPTED]', { user, users });
             setCurrentUser(user)
             setUsers(users)
             toast.dismiss()
@@ -48,7 +49,7 @@ const SocketProvider = ({ children }) => {
         },
         [setCurrentUser, setStatus, setUsers],
     )
-
+s
     const handleUserLeft = useCallback(
         ({ user }) => {
             toast.success(`${user.username} left the room`)
