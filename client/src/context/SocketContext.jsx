@@ -49,7 +49,7 @@ const SocketProvider = ({ children }) => {
         },
         [setCurrentUser, setStatus, setUsers],
     )
-s
+
     const handleUserLeft = useCallback(
         ({ user }) => {
             toast.success(`${user.username} left the room`)
