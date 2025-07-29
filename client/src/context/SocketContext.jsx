@@ -178,5 +178,4 @@ SocketProvider.propTypes = {
     children: PropTypes.node.isRequired,
 }
 
-export { SocketProvider }
 export default SocketContext
