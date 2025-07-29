@@ -94,10 +94,12 @@ io.on("connection", (socket) => {
 			masterUsername = username;
 			roomMasterMap.set(roomId, masterUsername);
 			isRoomMaster = true;
-			console.log('[SET MASTER]', { username, roomId });
+			console.log('[SET MASTER]', { username, roomId, isRoomMaster });
 		} else if (username === masterUsername) {
 			isRoomMaster = true;
-			console.log('[MASTER REJOIN]', { username, roomId });
+			console.log('[MASTER REJOIN]', { username, roomId, isRoomMaster });
+		} else {
+			console.log('[NOT MASTER]', { username, roomId, masterUsername, isRoomMaster });
 		}
 		
 		// Debug log
@@ -110,6 +112,10 @@ io.on("connection", (socket) => {
 			io.to(socket.id).emit(ACTIONS.USERNAME_EXISTS)
 			return
 		}
+		
+		// Force isRoomMaster to be boolean
+		const finalIsRoomMaster = Boolean(isRoomMaster);
+		
 		const user = {
 			username,
 			roomId,
@@ -118,7 +124,7 @@ io.on("connection", (socket) => {
 			typing: false,
 			socketId: socket.id,
 			currentFile: null,
-			isRoomMaster,
+			isRoomMaster: finalIsRoomMaster,
 			breakoutRoomId: null // Track which breakout room user is in
 		}
 		
@@ -127,6 +133,7 @@ io.on("connection", (socket) => {
 			username: user.username,
 			roomId: user.roomId,
 			isRoomMaster: user.isRoomMaster,
+			finalIsRoomMaster: finalIsRoomMaster,
 			socketId: user.socketId
 		});
 		
