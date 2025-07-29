@@ -70,8 +70,12 @@ function getActiveRoomId(user) {
 }
 
 io.on("connection", (socket) => {
+	console.log('=== SOCKET CONNECTED ===', socket.id);
+	
 	// Handle user actions
 	socket.on(ACTIONS.JOIN_REQUEST, ({ roomId, username }) => {
+		console.log('=== JOIN REQUEST ===', { roomId, username, socketId: socket.id });
+		
 		// Remove any old socket for this username in this room
 		userSocketMap = userSocketMap.filter(
 			u => !(u.roomId === roomId && u.username === username)
@@ -82,7 +86,7 @@ io.on("connection", (socket) => {
 		const isFirstUser = usersInRoom.length === 0;
 		const isRoomMaster = isFirstUser;
 		
-		console.log('[SIMPLE MASTER LOGIC]', { 
+		console.log('=== MASTER CHECK ===', { 
 			roomId, 
 			username, 
 			usersInRoomCount: usersInRoom.length,
@@ -95,6 +99,7 @@ io.on("connection", (socket) => {
 			(u) => u.username === username
 		)
 		if (isUsernameExist.length > 0) {
+			console.log('=== USERNAME EXISTS ===', { username, roomId });
 			io.to(socket.id).emit(ACTIONS.USERNAME_EXISTS)
 			return
 		}
@@ -111,7 +116,7 @@ io.on("connection", (socket) => {
 			breakoutRoomId: null
 		}
 		
-		console.log('[USER CREATED]', { 
+		console.log('=== USER CREATED ===', { 
 			username: user.username,
 			roomId: user.roomId,
 			isRoomMaster: user.isRoomMaster,
@@ -123,14 +128,14 @@ io.on("connection", (socket) => {
 		socket.broadcast.to(roomId).emit(ACTIONS.USER_JOINED, { user })
 		const users = getUsersInRoom(roomId)
 		
-		console.log('[SENDING TO CLIENT]', { 
+		console.log('=== SENDING TO CLIENT ===', { 
 			user: { ...user }, 
 			users: users.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
 		});
 		
 		io.to(socket.id).emit(ACTIONS.JOIN_ACCEPTED, { user, users })
-		console.log('[AFTER JOIN]', userSocketMap.filter(u => u.roomId === roomId).map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster, socketId: u.socketId })))
-
+		console.log('=== JOIN COMPLETED ===', { username, roomId, isRoomMaster });
+		
 		// After join, sync code space for main room
 		const activeRoomId = roomId;
 		if (!roomFiles.has(activeRoomId)) {
