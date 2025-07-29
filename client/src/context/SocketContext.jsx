@@ -2,7 +2,7 @@ import useAppContext from "@/hooks/useAppContext"
 import ACTIONS from "@/utils/actions"
 import UserStatus from "@/utils/status"
 import PropTypes from "prop-types"
-import { createContext, useCallback, useEffect, useMemo, useState } from "react"
+import { createContext, useCallback, useEffect, useMemo, useState, useContext } from "react"
 import { toast } from "react-hot-toast"
 import { io } from "socket.io-client"
 
@@ -10,16 +10,46 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000"
 
 const SocketContext = createContext()
 
-const SocketProvider = ({ children }) => {
+export const useSocket = () => {
+    const context = useContext(SocketContext)
+    if (!context) {
+        throw new Error('useSocket must be used within a SocketProvider')
+    }
+    return context.socket
+}
+
+export const SocketProvider = ({ children }) => {
     const { setUsers, setStatus, setCurrentUser } = useAppContext()
     const [breakoutRooms, setBreakoutRooms] = useState([])
+    
+    console.log('=== CREATING SOCKET ===', BACKEND_URL)
+    
     const socket = useMemo(
         () =>
             io(BACKEND_URL, {
                 reconnectionAttempts: 2,
+                transports: ["websocket", "polling"],
             }),
         [],
     )
+
+    useEffect(() => {
+        socket.on("connect", () => {
+            console.log('=== SOCKET CONNECTED ===', socket.id)
+        })
+
+        socket.on("disconnect", () => {
+            console.log('=== SOCKET DISCONNECTED ===')
+        })
+
+        socket.on("connect_error", (error) => {
+            console.error('=== SOCKET CONNECTION ERROR ===', error)
+        })
+
+        return () => {
+            console.log('=== CLEANING UP SOCKET ===')
+        }
+    }, [socket])
 
     const handleError = useCallback(
         (err) => {
