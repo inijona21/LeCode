@@ -29,6 +29,13 @@ function Editor() {
     const onCodeChange = (code, view) => {
         const file = { ...currentFile, content: code }
         setCurrentFile(file)
+        
+        console.log('=== SENDING FILE UPDATE ===', { 
+            fileId: file.id, 
+            contentLength: code.length,
+            username: currentUser.username
+        });
+        
         socket.emit(ACTIONS.FILE_UPDATED, { file })
         const cursorPosition = view.state?.selection?.main?.head
         socket.emit(ACTIONS.TYPING_START, { cursorPosition })

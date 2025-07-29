@@ -184,6 +184,12 @@ function FileContextProvider({ children }) {
 
     const handleFileUpdated = useCallback(
         ({ file }) => {
+            console.log('=== RECEIVED FILE UPDATE ===', { 
+                fileId: file.id, 
+                currentFileId: currentFile?.id,
+                contentLength: file.content?.length || 0
+            });
+            
             setFiles((prev) =>
                 prev.map((f) => {
                     if (f.id === file.id) {
@@ -192,7 +198,8 @@ function FileContextProvider({ children }) {
                     return f
                 }),
             )
-            if (currentFile.id === file.id) {
+            if (currentFile?.id === file.id) {
+                console.log('=== UPDATING CURRENT FILE ===', file.name);
                 setCurrentFile(file)
             }
         },

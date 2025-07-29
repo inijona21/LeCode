@@ -306,12 +306,26 @@ io.on("connection", (socket) => {
 	socket.on(ACTIONS.FILE_UPDATED, ({ file }) => {
 		const user = userSocketMap.find((u) => u.socketId === socket.id);
 		const activeRoomId = getActiveRoomId(user);
+		
+		console.log('=== SERVER RECEIVED FILE UPDATE ===', { 
+			username: user?.username, 
+			roomId: activeRoomId, 
+			fileId: file.id,
+			contentLength: file.content?.length || 0
+		});
+		
 		if (!roomFiles.has(activeRoomId)) {
 			roomFiles.set(activeRoomId, { files: [], currentFile: null });
 		}
 		const roomState = roomFiles.get(activeRoomId);
 		const idx = roomState.files.findIndex(f => f.id === file.id);
 		if (idx !== -1) roomState.files[idx] = file;
+		
+		console.log('=== BROADCASTING FILE UPDATE ===', { 
+			roomId: activeRoomId,
+			fileId: file.id
+		});
+		
 		socket.to(activeRoomId).emit(ACTIONS.FILE_UPDATED, { file });
 	})
 
