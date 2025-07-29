@@ -7,7 +7,7 @@ import { saveAs } from "file-saver"
 import JSZip from "jszip"
 import langMap from "lang-map"
 import PropTypes from "prop-types"
-import { createContext, useCallback, useEffect, useState } from "react"
+import { createContext, useCallback, useEffect, useRef, useState } from "react"
 import { toast } from "react-hot-toast"
 import { v4 as uuidv4 } from "uuid"
 
@@ -16,29 +16,54 @@ const FileContext = createContext()
 function FileContextProvider({ children }) {
     const { socket } = useSocket()
     const { setLanguage } = useSetting()
+    const { setUsers, activeRoomId } = useAppContext()
+    // Map: roomId -> { files, currentFile }
+    const [roomFileMap, setRoomFileMap] = useState(() => new Map())
+    // Local state for current room
     const [files, setFiles] = useState([initialFile])
     const [currentFile, setCurrentFile] = useState(initialFile)
-    const { setUsers } = useAppContext()
+    // Track last activeRoomId to avoid unnecessary resets
+    const lastRoomIdRef = useRef("")
+
+    // Helper: update roomFileMap for current room
+    const updateRoomFileMap = (roomId, files, currentFile) => {
+        setRoomFileMap(prev => {
+            const newMap = new Map(prev)
+            newMap.set(roomId, { files, currentFile })
+            return newMap
+        })
+    }
+
+    // On activeRoomId change, update files/currentFile to that room
+    useEffect(() => {
+        if (!activeRoomId) return
+        // Save current state to map before switching
+        if (lastRoomIdRef.current && lastRoomIdRef.current !== activeRoomId) {
+            updateRoomFileMap(lastRoomIdRef.current, files, currentFile)
+        }
+        // Load state for new room
+        const roomState = roomFileMap.get(activeRoomId)
+        if (roomState) {
+            setFiles(roomState.files)
+            setCurrentFile(roomState.currentFile)
+        } else {
+            setFiles([initialFile])
+            setCurrentFile(initialFile)
+        }
+        lastRoomIdRef.current = activeRoomId
+    }, [activeRoomId])
 
     const createFile = (name) => {
-        // Check if file with same name already exists
         let num = 1
         let fileExists = files.some((file) => file.name === name)
-
         while (fileExists) {
             name = `${name} (${num++})`
             fileExists = files.some((file) => file.name === name)
             if (!fileExists) break
         }
-
         const id = uuidv4()
-        const file = {
-            id,
-            name,
-            content: "",
-        }
+        const file = { id, name, content: "" }
         setFiles((prev) => [...prev, file])
-
         // File created event sent to server
         socket.emit(ACTIONS.FILE_CREATED, { file })
         return id
@@ -57,7 +82,6 @@ function FileContextProvider({ children }) {
     }
 
     const openFile = (id) => {
-        // Save current file
         if (currentFile) {
             updateFile(currentFile.id, currentFile.content)
         }
@@ -66,13 +90,10 @@ function FileContextProvider({ children }) {
     }
 
     const renameFile = (id, newName) => {
-        // Check if file with same name already exists
         const fileExists = files.some((file) => file.name === newName)
-
         if (fileExists) {
             return false
         }
-
         setFiles((prev) =>
             prev.map((file) => {
                 if (file.id === id) {
@@ -81,11 +102,8 @@ function FileContextProvider({ children }) {
                 return file
             }),
         )
-
-        // File renamed event sent to server
         const file = { id, name: newName }
         socket.emit(ACTIONS.FILE_RENAMED, { file })
-
         return true
     }
 
@@ -94,7 +112,6 @@ function FileContextProvider({ children }) {
         if (currentFile.id === id) {
             setCurrentFile(null)
         }
-        // File deleted event sent to server
         socket.emit(ACTIONS.FILE_DELETED, { id })
     }
 
@@ -118,16 +135,16 @@ function FileContextProvider({ children }) {
         })
     }
 
+    // --- SOCKET EVENT HANDLERS (per room) ---
     const handleUserJoined = useCallback(
         ({ user }) => {
             toast.success(`${user.username} joined the room`)
-            // send the code to the server
+            // send the code to the server (for this room only)
             socket.emit(ACTIONS.SYNC_FILES, {
                 files,
                 currentFile,
                 socketId: user.socketId,
             })
-
             setUsers((pre) => {
                 return [...pre, user]
             })

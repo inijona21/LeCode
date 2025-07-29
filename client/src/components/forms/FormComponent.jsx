@@ -14,6 +14,27 @@ function FormComponent() {
     const usernameRef = useRef(null)
     const navigate = useNavigate()
 
+    // Prefill from sessionStorage on mount, with delay to avoid socket race
+    useEffect(() => {
+        const saved = sessionStorage.getItem("lecoder_user")
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved)
+                setTimeout(() => {
+                    setCurrentUser(prev => ({ ...prev, ...parsed }))
+                }, 500) // delay 500ms
+            } catch {}
+        }
+    }, [setCurrentUser])
+
+    // Save to sessionStorage on change
+    useEffect(() => {
+        sessionStorage.setItem("lecoder_user", JSON.stringify({
+            username: currentUser.username,
+            roomId: currentUser.roomId
+        }))
+    }, [currentUser.username, currentUser.roomId])
+
     const createNewRoomId = () => {
         setCurrentUser({ ...currentUser, roomId: uuidv4() })
         toast.success("Room ID baru telah dibuat")

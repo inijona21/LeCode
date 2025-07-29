@@ -9,7 +9,12 @@ function AppContextProvider({ children }) {
     const [currentUser, setCurrentUser] = useState({
         username: "",
         roomId: "",
+        isRoomMaster: false,
+        breakoutRoomId: null
     })
+    const [breakoutRooms, setBreakoutRooms] = useState([])
+    // Track which room the user is currently in (main or breakout)
+    const [activeRoomId, setActiveRoomId] = useState("")
 
     return (
         <AppContext.Provider
@@ -20,6 +25,10 @@ function AppContextProvider({ children }) {
                 setCurrentUser,
                 status,
                 setStatus,
+                breakoutRooms,
+                setBreakoutRooms,
+                activeRoomId,
+                setActiveRoomId,
             }}
         >
             {children}
