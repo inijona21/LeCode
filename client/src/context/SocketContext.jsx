@@ -41,7 +41,10 @@ const SocketProvider = ({ children }) => {
 
     const handleJoiningAccept = useCallback(
         ({ user, users }) => {
-            console.log('[JOIN_ACCEPTED]', { user, users });
+            console.log('[JOIN_ACCEPTED]', { 
+                user: { ...user }, 
+                users: users.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
+            });
             setCurrentUser(user)
             setUsers(users)
             toast.dismiss()

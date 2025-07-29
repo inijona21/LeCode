@@ -125,6 +125,13 @@ io.on("connection", (socket) => {
 		socket.join(roomId)
 		socket.broadcast.to(roomId).emit(ACTIONS.USER_JOINED, { user })
 		const users = getUsersInRoom(roomId)
+		
+		// Debug: Log data yang akan dikirim ke client
+		console.log('[SENDING TO CLIENT]', { 
+			user: { ...user }, 
+			users: users.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
+		});
+		
 		io.to(socket.id).emit(ACTIONS.JOIN_ACCEPTED, { user, users })
 		// Debug log after join
 		console.log('[AFTER JOIN]', userSocketMap.filter(u => u.roomId === roomId).map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster, socketId: u.socketId })))
