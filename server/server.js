@@ -306,6 +306,13 @@ io.on("connection", (socket) => {
 	socket.on(ACTIONS.FILE_UPDATED, ({ file }) => {
 		const user = userSocketMap.find((u) => u.socketId === socket.id);
 		const activeRoomId = getActiveRoomId(user);
+		console.log('=== FILE UPDATED ===', { 
+			username: user?.username, 
+			roomId: activeRoomId, 
+			fileId: file.id,
+			contentLength: file.content?.length || 0
+		});
+		
 		if (!roomFiles.has(activeRoomId)) {
 			roomFiles.set(activeRoomId, { files: [], currentFile: null });
 		}

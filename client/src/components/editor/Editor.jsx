@@ -22,47 +22,57 @@ function Editor() {
     const { socket } = useSocket()
     const { tabHeight } = useWindowDimensions()
     const [timeOut, setTimeOut] = useState(null)
-    const [isUpdatingFromServer, setIsUpdatingFromServer] = useState(false)
+    const [localContent, setLocalContent] = useState("")
+    const [isTyping, setIsTyping] = useState(false)
     const editorRef = useRef(null)
+    const lastServerContent = useRef("")
     const filteredUsers = users.filter(
         (u) => u.username !== currentUser.username,
     )
 
-    const onCodeChange = useCallback((code, view) => {
-        // Don't emit if we're updating from server
-        if (isUpdatingFromServer) return
+    // Update local content when currentFile changes
+    useEffect(() => {
+        if (currentFile?.content !== undefined) {
+            setLocalContent(currentFile.content)
+            lastServerContent.current = currentFile.content
+        }
+    }, [currentFile?.id, currentFile?.content])
 
-        const file = { ...currentFile, content: code }
-        setCurrentFile(file)
+    const onCodeChange = useCallback((code, view) => {
+        setLocalContent(code)
+        setIsTyping(true)
         
         // Debounce the server update
         clearTimeout(timeOut)
         const newTimeOut = setTimeout(() => {
+            const file = { ...currentFile, content: code }
             socket.emit(ACTIONS.FILE_UPDATED, { file })
-        }, 300) // 300ms debounce
+            setIsTyping(false)
+        }, 500) // 500ms debounce
         setTimeOut(newTimeOut)
         
         const cursorPosition = view.state?.selection?.main?.head
         socket.emit(ACTIONS.TYPING_START, { cursorPosition })
         
         // Clear typing timeout
-        clearTimeout(timeOut)
         const typingTimeOut = setTimeout(
             () => socket.emit(ACTIONS.TYPING_PAUSE),
             1000,
         )
         setTimeOut(typingTimeOut)
-    }, [currentFile, socket, timeOut, isUpdatingFromServer])
+    }, [currentFile, socket, timeOut])
 
     // Listen for file updates from server
     const handleFileUpdateFromServer = useCallback(({ file }) => {
-        if (file.id === currentFile?.id) {
-            setIsUpdatingFromServer(true)
-            setCurrentFile(file)
-            // Reset flag after a short delay
-            setTimeout(() => setIsUpdatingFromServer(false), 50)
+        if (file.id === currentFile?.id && !isTyping) {
+            // Only update if content is different and user is not typing
+            if (file.content !== lastServerContent.current) {
+                setLocalContent(file.content)
+                lastServerContent.current = file.content
+                setCurrentFile(file)
+            }
         }
-    }, [currentFile?.id, setCurrentFile])
+    }, [currentFile?.id, setCurrentFile, isTyping])
 
     // Listen for FILE_UPDATED events from server
     useEffect(() => {
@@ -95,11 +105,11 @@ function Editor() {
     return (
         <CodeMirror
             ref={editorRef}
-            placeholder={placeholder(currentFile.name)}
+            placeholder={placeholder(currentFile?.name)}
             mode={language.toLowerCase()}
             theme={editorThemes[theme]}
             onChange={onCodeChange}
-            value={currentFile.content}
+            value={localContent}
             extensions={getExtensions()}
             minHeight="100%"
             maxWidth="100vw"
