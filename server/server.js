@@ -83,14 +83,25 @@ io.on("connection", (socket) => {
 		
 		// Simple master logic: first user in room becomes master
 		const usersInRoom = getUsersInRoom(roomId);
-		const isFirstUser = usersInRoom.length === 0;
-		const isRoomMaster = isFirstUser;
+		let isRoomMaster = false;
+		
+		// Check if this user is already the master for this room
+		const existingMaster = roomMasterMap.get(roomId);
+		if (existingMaster === username) {
+			isRoomMaster = true;
+			console.log('=== MASTER REJOIN ===', { username, roomId });
+		} else if (usersInRoom.length === 0) {
+			// First user in room becomes master
+			roomMasterMap.set(roomId, username);
+			isRoomMaster = true;
+			console.log('=== SET NEW MASTER ===', { username, roomId });
+		}
 		
 		console.log('=== MASTER CHECK ===', { 
 			roomId, 
 			username, 
 			usersInRoomCount: usersInRoom.length,
-			isFirstUser,
+			existingMaster,
 			isRoomMaster
 		});
 		
@@ -246,16 +257,27 @@ io.on("connection", (socket) => {
 
 	// Remove duplicate GET_BREAKOUT_ROOMS handler - the working one is above
 
-	socket.on("disconnecting", () => {
+	// Handle disconnect
+	socket.on("disconnect", () => {
+		console.log('=== SOCKET DISCONNECTED ===', socket.id);
 		const user = userSocketMap.find((user) => user.socketId === socket.id)
 		const roomId = user?.roomId
 		if (roomId === undefined || user === undefined) return
-		// Persistent master: do NOT promote other users to master
-		socket.broadcast.to(roomId).emit(ACTIONS.USER_DISCONNECTED, { user })
+		
+		// Don't remove master status when user disconnects
+		// Only remove from userSocketMap
 		userSocketMap = userSocketMap.filter((u) => u.socketId !== socket.id)
+		
+		// Notify other users
+		socket.broadcast.to(roomId).emit(ACTIONS.USER_DISCONNECTED, { user })
 		socket.leave()
-		// Debug log after disconnect
-		console.log('[AFTER DISCONNECT]', userSocketMap.filter(u => u.roomId === roomId).map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster, socketId: u.socketId })))
+		
+		console.log('=== USER DISCONNECTED ===', { 
+			username: user?.username, 
+			roomId,
+			isRoomMaster: user?.isRoomMaster,
+			remainingUsers: userSocketMap.filter(u => u.roomId === roomId).length
+		});
 	})
 
 	// --- FILE/CODE EVENTS ---
