@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 5000
 // CORS configuration for production
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://le-code.vercel.app", // Update dengan domain Vercel yang sebenarnya
   "https://your-client-domain.vercel.app" // Replace with your actual Vercel domain
 ]
 
@@ -80,14 +81,26 @@ io.on("connection", (socket) => {
 		let masterUsername = roomMasterMap.get(roomId);
 		const usersInRoom = getUsersInRoom(roomId);
 		let isRoomMaster = false;
+		
+		console.log('[MASTER LOGIC]', { 
+			roomId, 
+			username, 
+			masterUsername, 
+			usersInRoomCount: usersInRoom.length,
+			existingUsers: usersInRoom.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
+		});
+		
 		if (!masterUsername) {
 			// User pertama, set sebagai master
 			masterUsername = username;
 			roomMasterMap.set(roomId, masterUsername);
 			isRoomMaster = true;
+			console.log('[SET MASTER]', { username, roomId });
 		} else if (username === masterUsername) {
 			isRoomMaster = true;
+			console.log('[MASTER REJOIN]', { username, roomId });
 		}
+		
 		// Debug log
 		console.log('[JOIN_REQUEST]', { username, roomId, isRoomMaster, masterUsername, usersInRoom: usersInRoom.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster, socketId: u.socketId })) });
 		// Check is username exist in the room

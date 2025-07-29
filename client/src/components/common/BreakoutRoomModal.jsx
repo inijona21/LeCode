@@ -11,6 +11,14 @@ function BreakoutRoomModal({ isOpen, onClose }) {
     const [selectedUser, setSelectedUser] = useState("")
     const [selectedBreakoutRoom, setSelectedBreakoutRoom] = useState("")
 
+    // Debug logging
+    console.log('[BREAKOUT MODAL]', { 
+        currentUser, 
+        isRoomMaster: currentUser.isRoomMaster,
+        username: currentUser.username,
+        roomId: currentUser.roomId
+    });
+
     // Main room object
     const mainRoom = {
         id: currentUser.roomId,
@@ -63,12 +71,19 @@ function BreakoutRoomModal({ isOpen, onClose }) {
             return
         }
 
+        console.log('[CREATE BREAKOUT]', { 
+            currentUser, 
+            isRoomMaster: currentUser.isRoomMaster,
+            roomName: newRoomName.trim()
+        });
+
         socket.emit("CREATE_BREAKOUT_ROOM", {
             parentRoomId: currentUser.roomId,
             name: newRoomName.trim()
         }, (response) => {
             if (response.error) {
                 toast.error(response.error)
+                console.log('[CREATE ERROR]', response.error);
             } else {
                 toast.success(`Breakout room "${response.name}" created successfully`)
                 setNewRoomName("")
