@@ -314,7 +314,7 @@ io.on("connection", (socket) => {
 			fileId: file.id,
 			contentLength: file.content?.length || 0,
 			usersInRoom: usersInRoom.length,
-			otherUsers: usersInRoom.filter(u => u.username !== user?.username).map(u => u.username)
+			allUsers: usersInRoom.map(u => u.username)
 		});
 		
 		if (!roomFiles.has(activeRoomId)) {
@@ -324,11 +324,12 @@ io.on("connection", (socket) => {
 		const idx = roomState.files.findIndex(f => f.id === file.id);
 		if (idx !== -1) roomState.files[idx] = file;
 		
-		// Broadcast to other users with sender info
+		// Broadcast to ALL other users in the room (including the sender)
 		const otherUsers = usersInRoom.filter(u => u.username !== user?.username);
 		if (otherUsers.length > 0) {
 			console.log('=== BROADCASTING TO ===', otherUsers.map(u => u.username));
-			socket.to(activeRoomId).emit(ACTIONS.FILE_UPDATED, { 
+			// Use broadcast to room instead of socket.to to ensure all users get it
+			socket.broadcast.to(activeRoomId).emit(ACTIONS.FILE_UPDATED, { 
 				file, 
 				fromUser: user?.username 
 			});
