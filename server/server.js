@@ -306,53 +306,13 @@ io.on("connection", (socket) => {
 	socket.on(ACTIONS.FILE_UPDATED, ({ file }) => {
 		const user = userSocketMap.find((u) => u.socketId === socket.id);
 		const activeRoomId = getActiveRoomId(user);
-		const usersInRoom = getUsersInRoom(activeRoomId);
-		
-		console.log('=== FILE UPDATED ===', { 
-			username: user?.username, 
-			roomId: activeRoomId, 
-			fileId: file.id,
-			contentLength: file.content?.length || 0,
-			usersInRoom: usersInRoom.length,
-			allUsers: usersInRoom.map(u => u.username)
-		});
-		
 		if (!roomFiles.has(activeRoomId)) {
 			roomFiles.set(activeRoomId, { files: [], currentFile: null });
 		}
 		const roomState = roomFiles.get(activeRoomId);
 		const idx = roomState.files.findIndex(f => f.id === file.id);
 		if (idx !== -1) roomState.files[idx] = file;
-		
-		// Broadcast to ALL other users in the room (including the sender)
-		const otherUsers = usersInRoom.filter(u => u.username !== user?.username);
-		if (otherUsers.length > 0) {
-			console.log('=== BROADCASTING TO ===', otherUsers.map(u => u.username));
-			// Use broadcast to room instead of socket.to to ensure all users get it
-			socket.broadcast.to(activeRoomId).emit(ACTIONS.FILE_UPDATED, { 
-				file, 
-				fromUser: user?.username 
-			});
-		}
-	})
-
-	socket.on(ACTIONS.CURSOR_UPDATE, ({ position, username, fileId }) => {
-		const user = userSocketMap.find((u) => u.socketId === socket.id);
-		const activeRoomId = getActiveRoomId(user);
-		
-		console.log('=== CURSOR UPDATE ===', { 
-			username, 
-			position, 
-			fileId,
-			roomId: activeRoomId
-		});
-		
-		// Broadcast cursor position to other users
-		socket.to(activeRoomId).emit(ACTIONS.CURSOR_UPDATE, { 
-			position, 
-			username, 
-			fileId 
-		});
+		socket.to(activeRoomId).emit(ACTIONS.FILE_UPDATED, { file });
 	})
 
 	socket.on(ACTIONS.FILE_RENAMED, ({ file }) => {

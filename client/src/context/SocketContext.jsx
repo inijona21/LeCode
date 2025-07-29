@@ -22,34 +22,13 @@ export const SocketProvider = ({ children }) => {
     const { setUsers, setStatus, setCurrentUser } = useAppContext()
     const [breakoutRooms, setBreakoutRooms] = useState([])
     
-    console.log('=== CREATING SOCKET ===', BACKEND_URL)
-    
     const socket = useMemo(
         () =>
             io(BACKEND_URL, {
                 reconnectionAttempts: 2,
-                transports: ["websocket", "polling"],
             }),
         [],
     )
-
-    useEffect(() => {
-        socket.on("connect", () => {
-            console.log('=== SOCKET CONNECTED ===', socket.id)
-        })
-
-        socket.on("disconnect", () => {
-            console.log('=== SOCKET DISCONNECTED ===')
-        })
-
-        socket.on("connect_error", (error) => {
-            console.error('=== SOCKET CONNECTION ERROR ===', error)
-        })
-
-        return () => {
-            console.log('=== CLEANING UP SOCKET ===')
-        }
-    }, [socket])
 
     const handleError = useCallback(
         (err) => {

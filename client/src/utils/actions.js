@@ -14,7 +14,6 @@ const ACTIONS = {
     RECEIVE_MESSAGE: "receive-message",
     TYPING_START: "typing-start",
     TYPING_PAUSE: "typing-pause",
-    CURSOR_UPDATE: "cursor-update",
     USERNAME_EXISTS: "username-exists",
 }
 
