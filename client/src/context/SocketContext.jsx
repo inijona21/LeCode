@@ -46,7 +46,7 @@ const SocketProvider = ({ children }) => {
                 users: users.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
             });
             
-            // Ensure all properties are explicitly set and force isRoomMaster to be boolean
+            // Ensure isRoomMaster is properly set
             const userWithAllProps = {
                 username: user.username,
                 roomId: user.roomId,
@@ -55,7 +55,7 @@ const SocketProvider = ({ children }) => {
                 typing: user.typing,
                 socketId: user.socketId,
                 currentFile: user.currentFile,
-                isRoomMaster: Boolean(user.isRoomMaster),
+                isRoomMaster: user.isRoomMaster === true,
                 breakoutRoomId: user.breakoutRoomId
             };
             

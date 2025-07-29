@@ -76,34 +76,20 @@ io.on("connection", (socket) => {
 		userSocketMap = userSocketMap.filter(
 			u => !(u.roomId === roomId && u.username === username)
 		)
-		// Persistent master logic
-		let masterUsername = roomMasterMap.get(roomId);
-		const usersInRoom = getUsersInRoom(roomId);
-		let isRoomMaster = false;
 		
-		console.log('[MASTER LOGIC]', { 
+		// Simple master logic: first user in room becomes master
+		const usersInRoom = getUsersInRoom(roomId);
+		const isFirstUser = usersInRoom.length === 0;
+		const isRoomMaster = isFirstUser;
+		
+		console.log('[SIMPLE MASTER LOGIC]', { 
 			roomId, 
 			username, 
-			masterUsername, 
 			usersInRoomCount: usersInRoom.length,
-			existingUsers: usersInRoom.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
+			isFirstUser,
+			isRoomMaster
 		});
 		
-		if (!masterUsername) {
-			// User pertama, set sebagai master
-			masterUsername = username;
-			roomMasterMap.set(roomId, masterUsername);
-			isRoomMaster = true;
-			console.log('[SET MASTER]', { username, roomId, isRoomMaster });
-		} else if (username === masterUsername) {
-			isRoomMaster = true;
-			console.log('[MASTER REJOIN]', { username, roomId, isRoomMaster });
-		} else {
-			console.log('[NOT MASTER]', { username, roomId, masterUsername, isRoomMaster });
-		}
-		
-		// Debug log
-		console.log('[JOIN_REQUEST]', { username, roomId, isRoomMaster, masterUsername, usersInRoom: usersInRoom.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster, socketId: u.socketId })) });
 		// Check is username exist in the room
 		const isUsernameExist = usersInRoom.filter(
 			(u) => u.username === username
@@ -113,9 +99,6 @@ io.on("connection", (socket) => {
 			return
 		}
 		
-		// Force isRoomMaster to be boolean
-		const finalIsRoomMaster = Boolean(isRoomMaster);
-		
 		const user = {
 			username,
 			roomId,
@@ -124,16 +107,14 @@ io.on("connection", (socket) => {
 			typing: false,
 			socketId: socket.id,
 			currentFile: null,
-			isRoomMaster: finalIsRoomMaster,
-			breakoutRoomId: null // Track which breakout room user is in
+			isRoomMaster: isRoomMaster,
+			breakoutRoomId: null
 		}
 		
-		// Debug: Log user object yang akan dikirim
-		console.log('[USER OBJECT CREATED]', { 
+		console.log('[USER CREATED]', { 
 			username: user.username,
 			roomId: user.roomId,
 			isRoomMaster: user.isRoomMaster,
-			finalIsRoomMaster: finalIsRoomMaster,
 			socketId: user.socketId
 		});
 		
@@ -142,14 +123,12 @@ io.on("connection", (socket) => {
 		socket.broadcast.to(roomId).emit(ACTIONS.USER_JOINED, { user })
 		const users = getUsersInRoom(roomId)
 		
-		// Debug: Log data yang akan dikirim ke client
 		console.log('[SENDING TO CLIENT]', { 
 			user: { ...user }, 
 			users: users.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
 		});
 		
 		io.to(socket.id).emit(ACTIONS.JOIN_ACCEPTED, { user, users })
-		// Debug log after join
 		console.log('[AFTER JOIN]', userSocketMap.filter(u => u.roomId === roomId).map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster, socketId: u.socketId })))
 
 		// After join, sync code space for main room
