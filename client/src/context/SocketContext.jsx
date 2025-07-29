@@ -45,14 +45,29 @@ const SocketProvider = ({ children }) => {
                 user: { ...user }, 
                 users: users.map(u => ({ username: u.username, isRoomMaster: u.isRoomMaster }))
             });
-            setCurrentUser(user)
+            
+            // Ensure all properties are explicitly set
+            const userWithAllProps = {
+                username: user.username,
+                roomId: user.roomId,
+                status: user.status,
+                cursorPosition: user.cursorPosition,
+                typing: user.typing,
+                socketId: user.socketId,
+                currentFile: user.currentFile,
+                isRoomMaster: user.isRoomMaster,
+                breakoutRoomId: user.breakoutRoomId
+            };
+            
+            console.log('[SETTING CURRENT USER]', userWithAllProps);
+            setCurrentUser(userWithAllProps)
             setUsers(users)
             toast.dismiss()
             setStatus(UserStatus.JOINED)
         },
         [setCurrentUser, setStatus, setUsers],
     )
-s
+
     const handleUserLeft = useCallback(
         ({ user }) => {
             toast.success(`${user.username} left the room`)

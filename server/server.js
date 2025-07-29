@@ -121,6 +121,15 @@ io.on("connection", (socket) => {
 			isRoomMaster,
 			breakoutRoomId: null // Track which breakout room user is in
 		}
+		
+		// Debug: Log user object yang akan dikirim
+		console.log('[USER OBJECT CREATED]', { 
+			username: user.username,
+			roomId: user.roomId,
+			isRoomMaster: user.isRoomMaster,
+			socketId: user.socketId
+		});
+		
 		userSocketMap.push(user)
 		socket.join(roomId)
 		socket.broadcast.to(roomId).emit(ACTIONS.USER_JOINED, { user })
