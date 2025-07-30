@@ -24,6 +24,8 @@ function FileContextProvider({ children }) {
     const [currentFile, setCurrentFile] = useState(initialFile)
     // Track last activeRoomId to avoid unnecessary resets
     const lastRoomIdRef = useRef("")
+    // Track file update timestamps to handle conflicts
+    const fileUpdateTimestamps = useRef(new Map())
 
     // Helper: update roomFileMap for current room
     const updateRoomFileMap = (roomId, files, currentFile) => {
@@ -190,17 +192,32 @@ function FileContextProvider({ children }) {
                 contentLength: file.content?.length || 0
             });
             
-            setFiles((prev) =>
-                prev.map((f) => {
-                    if (f.id === file.id) {
-                        f.content = file.content
-                    }
-                    return f
-                }),
-            )
-            if (currentFile?.id === file.id) {
-                console.log('=== UPDATING CURRENT FILE ===', file.name);
-                setCurrentFile(file)
+            // Check if this update is newer than our local version
+            const lastTimestamp = fileUpdateTimestamps.current.get(file.id) || 0;
+            const currentTimestamp = Date.now();
+            
+            if (currentTimestamp > lastTimestamp) {
+                // Update timestamp
+                fileUpdateTimestamps.current.set(file.id, currentTimestamp);
+                
+                setFiles((prev) =>
+                    prev.map((f) => {
+                        if (f.id === file.id) {
+                            f.content = file.content
+                        }
+                        return f
+                    }),
+                )
+                if (currentFile?.id === file.id) {
+                    console.log('=== UPDATING CURRENT FILE ===', file.name);
+                    setCurrentFile(file)
+                }
+            } else {
+                console.log('=== IGNORING OLD FILE UPDATE ===', { 
+                    fileId: file.id,
+                    lastTimestamp,
+                    currentTimestamp
+                });
             }
         },
         [currentFile?.id],

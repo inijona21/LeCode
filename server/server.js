@@ -50,6 +50,9 @@ const roomFiles = new Map(); // key: roomId or breakoutRoomId, value: { files, c
 
 const roomMasterMap = new Map(); // key: roomId, value: masterUsername
 
+// Track file update timestamps to handle conflicts
+const fileUpdateTimestamps = new Map(); // key: fileId, value: timestamp
+
 function getUsersInRoom(roomId) {
   return userSocketMap.filter((user) => user.roomId == roomId)
 }
@@ -319,14 +322,30 @@ io.on("connection", (socket) => {
 		}
 		const roomState = roomFiles.get(activeRoomId);
 		const idx = roomState.files.findIndex(f => f.id === file.id);
-		if (idx !== -1) roomState.files[idx] = file;
 		
-		console.log('=== BROADCASTING FILE UPDATE ===', { 
-			roomId: activeRoomId,
-			fileId: file.id
-		});
+		// Check if this update is newer than the last one
+		const lastTimestamp = fileUpdateTimestamps.get(file.id) || 0;
+		const currentTimestamp = Date.now();
 		
-		socket.to(activeRoomId).emit(ACTIONS.FILE_UPDATED, { file });
+		if (currentTimestamp > lastTimestamp) {
+			// Update file and timestamp
+			if (idx !== -1) roomState.files[idx] = file;
+			fileUpdateTimestamps.set(file.id, currentTimestamp);
+			
+			console.log('=== BROADCASTING FILE UPDATE ===', { 
+				roomId: activeRoomId,
+				fileId: file.id,
+				timestamp: currentTimestamp
+			});
+			
+			socket.to(activeRoomId).emit(ACTIONS.FILE_UPDATED, { file });
+		} else {
+			console.log('=== IGNORING OLD FILE UPDATE ===', { 
+				fileId: file.id,
+				lastTimestamp,
+				currentTimestamp
+			});
+		}
 	})
 
 	socket.on(ACTIONS.FILE_RENAMED, ({ file }) => {
